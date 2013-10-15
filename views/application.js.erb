@@ -11,7 +11,7 @@ ws.onmessage = function(message) {
 };
 
 function make_html(message) {
-  return "<div class='panel panel-default'><div class='panel-heading'>" + message.handle + "</div><div class='panel-body'>" + message.body + "</div></div>"
+  return "<div class='panel panel-default'><div class='panel-heading'>" + message.handle + "</div><div class='panel-body'>" + message.body.autoLink() + "</div></div>"
 }
 
 $("#input-form").on("submit", function(event) {
