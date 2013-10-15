@@ -13,7 +13,8 @@ module ChatDemo
     end
 
     get "/thread-stats" do
-      Thread.list.map{|t| t.status}.join(", ")
+      content_type :html
+      "<pre>" + Thread.list.map{|t| t.inspect}.join(", ") + "\n\n" + Thread.current.inspect
     end
 
   end
