@@ -20,7 +20,7 @@ module ChatDemo
         @redis = Redis.new
       end
 
-      Thread.new do
+      Thread.new do         
          if !ENV["REDISTOGO_URL"].nil?
           uri = URI.parse(ENV["REDISTOGO_URL"])
           redis_sub = Redis.new(host: uri.host, port: uri.port, password: uri.password)
@@ -33,6 +33,7 @@ module ChatDemo
           end
         end
       end
+
     end
 
     def call(env)
@@ -45,7 +46,18 @@ module ChatDemo
 
         ws.on :message do |event|
           p [:message, event.data]
-          @redis.publish(CHANNEL, sanitize(event.data))
+          sanitized_data = sanitize(event.data)
+          
+          puts sanitized_data
+
+          ActiveRecord::Base.connection_pool.with_connection do
+            message = Message.create(handle: sanitized_data['handle'], body: sanitized_data['body'])
+            if message
+              @redis.publish(CHANNEL, JSON.generate(sanitized_data))
+            else
+              p "error creating message: #{sanitized_data}"
+            end
+          end          
         end
 
         ws.on :close do |event|
@@ -65,8 +77,7 @@ module ChatDemo
     private
     def sanitize(message)
       json = JSON.parse(message)
-      json.each {|key, value| json[key] = ERB::Util.html_escape(value) }
-      JSON.generate(json)
+      json.each {|key, value| json[key] = ERB::Util.html_escape(value) }      
     end
   end
 end
